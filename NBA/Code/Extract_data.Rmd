@@ -1,0 +1,30 @@
+---
+title: "extract_data"
+output: word_document
+---
+
+第一步，载入包，好像其实也不用载入这些包。。。
+```{r}
+library(XML)
+library(RCurl)
+library(stringr)
+```
+
+第二步，把html文档读进来，是字符串,并且找到要的东西的起始位置和终止位置
+```{r}
+u = 'https://stats.nba.com/teams/boxscores-traditional/'
+text <- readLines(u)#读入html源文件
+name_begin <- grep('<div class="stats-glossary" ng-show="showGlossary">',text)#找到开始提取的位置
+name_end <- grep('</div> <!-- .stats-glossary -->',text)#匹配到结尾的位置
+(Content <- text[(name_begin+2):name_end])#选中中间的所有HTML代码
+```
+
+第三步，提取含有名字的html文件中的文字，因为他的标签是<dt>和<dd>交叉着的
+```{r}
+Content <- str_remove(Content,pattern = "<dd>")
+Content <- str_remove(Content,pattern = "<dt>")
+Content <- str_remove(Content,pattern = "</dt>")
+Content <- str_remove(Content,pattern = "</dd>")
+(Content_name <- str_remove(Content,pattern = " ")[seq(1,42,by=2)])
+(Content_explain <-str_remove(Content,pattern = " ")[seq(2,43,by=2)])
+```

@@ -1,0 +1,10 @@
+\contentsline {section}{\numberline {第1节}研究目的}{2}% 
+\contentsline {section}{\numberline {第2节}研究背景}{2}% 
+\contentsline {section}{\numberline {第3节}数据说明}{3}% 
+\contentsline {section}{\numberline {第4节}指标设计}{4}% 
+\contentsline {section}{\numberline {第5节}描述性统计分析}{9}% 
+\contentsline {section}{\numberline {第6节}相关性分析}{13}% 
+\contentsline {section}{\numberline {第7节}模型建立}{14}% 
+\contentsline {section}{\numberline {第8节}模型评估与结论}{17}% 
+\contentsline {section}{\numberline {第9节}代码部分}{18}% 
+\contentsline {section}{\numberline {第10节}致谢}{23}% 

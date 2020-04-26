@@ -1,0 +1,132 @@
+---
+title: "Player Scoring Analysis"
+output:
+  html_document:
+    df_print: paged
+  word_document: default
+---
+#导入包与数据#
+```{r}
+library(ggplot2)
+library(dplyr)
+library(DMwR)
+player_scoring <- read.csv("/Users/sun/Desktop/NBA/Seasons_Stats.csv",header=T, na.strings = "NA")
+player <- read.csv("/Users/sun/Desktop/NBA/player_data.csv",header=T,na.strings = "NA")
+#用每个变量的中位数进行缺失值填充
+for(i in 7:53){
+  player_scoring[which(is.na(player_scoring[,i])),i]<-median(player_scoring[,i],na.rm = T)
+}
+```
+
+```{r}
+summary(player_scoring)
+PTS <- as.data.frame(aggregate(player_scoring$PTS,by=list(player_scoring$Player),FUN=sum))
+colnames(PTS) <- c("Name","pts")
+PTS <- PTS[order(PTS$pts,decreasing=T),]
+```
+#1.变量解释和选择#
+**变量名与含义**
+本数据统计了NBA67个赛季全体个人数据，包括得分，助攻，篮板等数据。下边介绍各项指标的含义即对应的变量名。
+Player Efficiency Rating(PER):球员效率值，他是评判球员贡献的指标，PER在综合评判球员的成绩如投篮得分，发球，三分球，助攻，篮板，盖帽和抢断，以及负面结果，如投篮失误和个人犯规后统计该球员的成绩。得到其最重效率值。
+Minutes Played(MP):每场比赛的上场时长
+Total Rebounds/Percentage(TRB)(TRB.):总篮板球
+Defensive Rebound/Rate(DRB)(DRB.):防守篮板，求全转换到防守方手中，进攻方球员投球未进，防守球员拿到球权，抢到球的球员记一个防守篮板球。
+Offensive Rebound/Rate(ORB)(ORB.):进攻篮板,投篮不中，但本队队员将篮板抢回，重新获得进攻机会。抢到球的球员记一个进攻篮板球。
+
+Field Goals made/attempted/percentage:(FG)(FGA)(FG.):投篮命中，除了罚球以外的投篮命中得分。
+3-Point Field Goals/Attempts/Percentage(X3P)(3PA)(3P.):三分投篮命中
+3-Point Attempt Rate(3PAr)
+2-Point Field Goals/Attempts/Percentage(X2P)(X2PA)(X2P.):二分投篮命中
+Effective Field Goal(eFG.):有效的投篮得分率
+Free Throws/Attempts/Percentage(FT)(FTA)(FT.):罚球
+True Shooting Rate(TS.)
+Assists/Assists Percentage(AST)(AST.):助攻
+Steals/Steal Percentage(STL)(STL.):
+Blocks/Blocks Percentage(BLK)(BLK.):
+Turnovers/Turnover Percentage(TOV)(TOV.):犯规
+Personal Fouls(PF):
+Points(PTS):
+Box Plus/Minus(BPM):
+Defensive Box Plus/Minus(DBPM):
+Offensive Box Plus/Minus(OBPM):
+Value Over Replacement(VORP):
+Win Shares Per 48 Minutes(WS/48):
+Win Shares(WS):
+Offensive Win Shares(OWS):
+Usage Percentage(USG.)
+
+#得分最高的前20个球员进攻篮板效率和防守篮板效率的分布图
+```{r}
+theme_set(theme_bw()) 
+ORB_DRB <-aggregate(player_scoring[,c("PTS","ORB.","DRB.")],by=list(player_scoring$Player),FUN=mean)
+ORB_DRB <- ORB_DRB[order(ORB_DRB$PTS,decreasing=T),]
+colnames(ORB_DRB) <- c("Player","PTS","ORBR","DRBR")
+ggplot(ORB_DRB[1:20,],aes(x=ORBR,y=DRBR))+
+  geom_point(aes(color=Player))+ theme(legend.position="bottom")+
+  labs(title="DRBR and ORBR")
+```
+上图表示历史上最杰出的20个球星的攻防篮板球率，所有球员的防守效率均高于进攻篮板球效率，左下角部分的点代表球员有较弱的进攻篮板球效率和较弱的防守篮板球效率，右上角的点代表球员有较强的进攻篮板球效率和较强的防守篮板球效率。左上方的点代表球员有较强的防守篮板球效率和较弱的进攻篮板球效率，右下方的点代表球员有较强的进攻篮板球效率和较低的防守篮板球效率。值得注意的是右上角的凯文·杜兰特有极强的进攻和防守篮板球效率。
+
+
+#构造控球变量：
+个人单个赛季控球时长：是当一个队拿到控球权开始，到失去控球权结束的。每场比赛两队的控球机会是接近相等的。衡量两队的控球机会可以有效的评估个人成绩和队伍成绩。每队球员为了赢得比赛，需要在控球的时候拿到更多的分数。我们根据上述变量构造控球变量。
+第一种公式为：公式中每次犯规，投篮命中，和罚球结束一次控球。
+$Poss_t=(FG_t+\lambda FT_t)+\alpha [(FGA_t-FG_t)+\lambda(FTA_t-FT_t)-ORB_t]+(1-\alpha)DRB_o+TO_t$其中参数$\lambda$是结束控球的罚球所占比率，参数$\alpha$是一个0-1之间的参数。
+通常将参数设置为$\alpha=1;\lambda=0.44$
+第二种公式，我们不规定$\alpha和\lambda$，而是直接用64季比赛结果与具体的控球时间做线性回归，$Poss_t=\beta_0+\beta_1 FGA_t+\beta_2(FGA_t-FG_t)+\beta_3 FTA_T+\beta_4(FTA_t-FT_t)+\beta_5 ORB_t+\beta_6 DRB_o+\beta_7 TO_t+\epsilon$
+资料表明，根据OLS回归预测的模型参数为：$R^2=0.9615$
+```{r}
+player_scoring$POSS <- 3.2258+0.964*player_scoring$FGA-0.3452*(player_scoring$FGA-player_scoring$FG)+0.4637*player_scoring$FTA-0.2073*(player_scoring$FT-player_scoring$FT)-0.6227*player_scoring$ORB+0.3643*player_scoring$DRB+0.9767*player_scoring$TOV
+```
+
+
+
+
+
+
+
+#数据可视化
+1.按照PTS统计出历史上得分最高的球员，
+```{r}
+player_scoring[which(player_scoring$Player=="Kareem Abdul-Jabbar*"),c("Year","Player","Pos","Age","Tm")]
+```
+卡利姆·阿布杜尔·贾巴尔，1947年出生的职业运动员，司职中锋，绰号“天勾”，在1969年NBA选秀中于第1轮第1位以状元秀的身份被密沃尔基雄鹿队选中，新秀赛季当选NBA年度最佳新秀。1970-71赛季贾巴尔场均31.7），获得常规赛MVP以及NBA得分王称号，并率队获得NBA总冠军。1976年转投洛杉矶湖人队，与有“魔术师”之称的埃尔文·约翰逊成为湖人队的两大支柱，率领球队五次夺得NBA总冠军。
+```{r}
+player_scoring[which(player_scoring$Player=="Karl Malone*"),c("Year","Player","Pos","Age","Tm")]
+```
+卡尔·马龙（Karl Malone），司职大前锋，绰号“邮差”（The Mailman）
+在1985年NBA选秀中，卡尔·马龙在首轮第13顺位被犹他爵士队选中，职业生涯的前18个赛季在犹他爵士队度过，并与约翰·斯托克顿组成的“黑白双煞”让爵士队成为一支劲旅，两人带领爵士队两次打入NBA总决赛，但是都未能夺得NBA总冠军，生涯最后一年加盟洛杉矶湖人队
+```{r}
+player_scoring[which(player_scoring$Player=="Wilt Chamberlain*"),c("Year","Player","Pos","Age","Tm")]
+```
+威尔特·张伯伦,司职中锋。曾效力于NBA费城/旧金山勇士队（现金州勇士队）、费城76人队以及洛杉矶湖人队；毕业于堪萨斯大学的他在NBA打球之前曾在哈林篮球队效力，之后被认为是NBA历史上具有统治力的球员之一。2次夺得NBA总冠军），4次荣膺NBA常规赛MVP，13次入选NBA全明星阵容，10次入选NBA最佳阵容，连续2次入选NBA最佳防守阵容一阵，连续7次荣膺NBA得分王，11次荣膺NBA篮板王，1968年荣膺NBA助攻王。
+```{r}
+player_scoring[which(player_scoring$Player=="Kobe Bryant"),c("Year","Player","Pos","Age","Tm")]
+```
+科比·比恩·布莱恩特,司职得分后卫/小前锋（锋卫摇摆人），绰号“黑曼巴”/“小飞侠”。
+科比是前NBA球员乔·布莱恩特的儿子。在1996年NBA选秀中，科比于第1轮第13位被夏洛特黄蜂队选中，后被交易至洛杉矶湖人队，整个NBA生涯（1996年-2016年）都效力于洛杉矶湖人队。
+科比的职业生涯随湖人队5夺NBA总冠军；荣膺1次常规赛MVP（2007-08赛季），2次总决赛MVP，4次全明星赛MVP；共18次入选NBA全明星阵容，15次入选NBA最佳阵容，12次入选NBA最佳防守阵容。
+```{r}
+player_scoring[which(player_scoring$Player=="Michael Jordan*"),c("Year","Player","Pos","Age","Tm")]
+```
+迈克尔·乔丹（Michael Jordan）司职得分后卫，绰号“飞人”（Air Jordan） [1]  。
+迈克尔·乔丹在在1984年NBA选秀中于第1轮第3位被芝加哥公牛队选中，职业生涯曾效力于芝加哥公牛队以及华盛顿奇才队，新秀赛季当选NBA年度最佳新秀。1986-87赛季，乔丹场均得到37.1分，首次获得NBA得分王称号。1991-93赛季，乔丹连续2次荣膺常规赛MVP）和3次总决赛MVP
+```{r}
+PTS$Name <- factor(PTS$Name,levels=PTS$Name)
+ggplot(PTS[6:20,],aes(x=Name,y=pts))+
+  geom_bar(stat="identity", width=.5, fill="tomato3") +
+
+labs(title="Top 20 Points Player In One's Life") +
+
+theme(axis.text.x = element_text(angle=65, vjust=0.6))
+```
+除上述介绍的5名著名球星，在过往的62个NBA赛季中，其他获得个人最好成绩的球员如上。
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,122 @@
+\documentclass{report}
+%使用ctex宏包将标题设置为中文格式,ctex和documentclass 其中一个，否则冲突
+\usepackage[UTF8, heading = true,scheme=chinese]{ctex}
+\ctexset{
+	section={
+		name={第,节},
+		number=\arabic{section}, },
+		section/titleformat+={\zihao{4}\raggedright}
+}
+
+
+\usepackage{graphicx}
+\graphicspath{ {/Users/sun/Desktop/NBA/MyLatex/figure/}}
+\usepackage[a4paper,top=20mm,bottom=20mm]{geometry}
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[LE,RO]{西南大学数学与统计学院}
+\fancyhead[RE,LO]{NBA球员数据对球队胜率影响}
+\usepackage{amsmath}
+\usepackage{subcaption}
+\usepackage{listings}
+%插入参考文献
+\usepackage{apacite}
+\renewcommand\refname{参考文献}
+\usepackage{url}
+
+\usepackage{abstract}
+\renewcommand{\abstractname}{\LARGE 摘要}
+\begin{document}
+	
+	\begin{titlepage}
+		\centering
+		\includegraphics[width=0.5\textwidth]{university.jpg}\par
+		\vspace{1cm}
+		{\scshape\LARGE 本科毕业论文 \par}
+		\vspace{1cm}
+		{\scshape\LARGE\bfseries 题目：NBA球员数据对球队胜率的影响\par}
+		\vspace{1cm}
+		{\large 学院：数学与统计学院\par}
+		\vspace{0.5cm}
+		{\large 专业： 统计学\par}
+		\vspace{0.5cm}
+		{\large 年级： 2016级\par}
+		\vspace{0.5cm}
+		{\large 学号：222016314032025\par}
+		\vspace{0.5cm}
+		{\large 姓名： 孙瑶\par}
+		\vspace{0.5cm}
+		{\large 指导老师： 李婷婷\par}
+		\vspace{0.5cm}
+		{\large 成绩：\par}
+		
+		\vfill
+		
+		% Bottom of the page
+		{\large \today\par}
+	\end{titlepage}
+	
+	\begin{abstract}
+		本文利用NBA球员在18-19赛季中基本数据，构建衡量球员效率、有效利用率、实际命中率、控球时长等指标，然后根据每位球员在整个赛季中的上场时间作为权重，将球员指标加权平均后构建某队球员对所在球队的实际贡献指标，综合球队的进攻效率，防守效率和净得分等指标，找到对球队在比赛中获胜概率的主要影响因素，为球队在制定训练计划，安排球员配置等方面提出有效建议，并建立对球队在下一赛季胜率的预测模型。本文首先对NBA篮球赛制和特点进行总结，分析出影响球队胜率的最主要因素，提取变量特征，建立多元线性回归模型，以下一赛季的数据作为测试集计算出每个球队在下一个赛季中的胜率，并返回最终预测结果\\
+		
+		\textbf{关键词： 多元回归模型、指标构建、相关性分析、PER、TSR、eFGR}\\
+		
+		Based on NBA players basic data in the 18th and 19th season, construct measure player efficiency, effective utilization and the actual shooting, ball control indices such as the length, then according to each player of the season playing time as the weight, the weighted average players indexes after building a team player on the team's actual contribution index, comprehensive efficiency of the team's offensive, defensive efficiency and net classification index, find the probability of winning in the game to the team's main influence factors, in the training plan for the team, suggest effective arrangements for the player configuration, and establish the forecast model of team next season match. This paper first summarizes the NBA basketball game system and characteristics, analyzes the most important factors affecting the team's winning rate, extracts the characteristics of variables, and establishes a multiple linear regression model. The following season's data is used as a test set to calculate the winning rate of each team in the next season, and returns the final prediction results.\\
+		
+		\textbf{Keywords: Multi-linear Regression Model、 Metrics Construction、Correlation analysis、PER、 TSR、eFGR}
+	\end{abstract}
+	
+	
+		
+
+	\tableofcontents
+	\newpage
+	\section{研究目的}
+	\input{intro}
+	
+	\section{研究背景}
+	\input{chapter02}
+	
+	\section{数据说明}
+	\input{chapter03}
+	
+	\section{指标设计}
+	\input{chapter04}
+	
+	\section{描述性统计分析}
+	\input{chapter06}
+	
+	\section{相关性分析}
+	\input{chapter07}
+	
+	\section{模型建立}
+	\input{chapter05}
+	
+	\section{模型评估与结论}
+	\input{conclusion}
+	
+	
+
+	\bibliography{Ref}
+	
+	
+	\section{代码部分}
+	\input{code}
+
+
+    
+	\section{致谢}
+	\input{thanks}
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+\end{document}
+
